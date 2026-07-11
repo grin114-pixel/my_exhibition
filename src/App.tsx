@@ -464,8 +464,8 @@ function App() {
         {!isLoadingExhibitions && exhibitions.length > 0 ? (
           <div className="exhibition-list">
             {exhibitions.map((exhibition) => (
-              <article key={exhibition.id} className="exhibition-card">
-                <div className="exhibition-card-header">
+              <section key={exhibition.id} className="exhibition-item">
+                <div className="exhibition-item-header">
                   <h2 className="card-date">{formatDateLabel(exhibition.effectiveDate)}</h2>
                   <div className="card-header-actions">
                     <button
@@ -487,53 +487,60 @@ function App() {
                   </div>
                 </div>
 
-                <div className="exhibition-card-body">
-                  <div className="exhibition-copy">
-                    {exhibition.is_recurring ? (
-                      <div className="exhibition-meta">
-                        <span className="chip">매달 반복</span>
-                      </div>
-                    ) : null}
-                    <h3>{exhibition.name}</h3>
-                    {exhibition.place ? (
-                      exhibition.link ? (
-                        <a
-                          className="exhibition-place exhibition-place-link"
-                          href={normalizeLink(exhibition.link)}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <PlaceIcon />
-                          <span>{exhibition.place}</span>
-                        </a>
-                      ) : (
-                        <p className="exhibition-place">
-                          <PlaceIcon />
-                          <span>{exhibition.place}</span>
+                <article className="exhibition-card">
+                  <div className="exhibition-card-body">
+                    <div className="exhibition-copy">
+                      {exhibition.is_recurring ? (
+                        <div className="exhibition-meta">
+                          <span className="chip">매달 반복</span>
+                        </div>
+                      ) : null}
+                      <h3>{exhibition.name}</h3>
+                      {exhibition.memo ? (
+                        <p className="exhibition-memo">
+                          <MemoIcon />
+                          <span>{exhibition.memo}</span>
                         </p>
-                      )
-                    ) : null}
-                    {exhibition.memo ? <p className="exhibition-memo">{exhibition.memo}</p> : null}
-                  </div>
+                      ) : null}
+                      {exhibition.place ? (
+                        exhibition.link ? (
+                          <a
+                            className="exhibition-place exhibition-place-link"
+                            href={normalizeLink(exhibition.link)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <PlaceIcon />
+                            <span>{exhibition.place}</span>
+                          </a>
+                        ) : (
+                          <p className="exhibition-place">
+                            <PlaceIcon />
+                            <span>{exhibition.place}</span>
+                          </p>
+                        )
+                      ) : null}
+                    </div>
 
-                  <div className="exhibition-visual">
-                    {exhibition.image_url ? (
-                      <button
-                        type="button"
-                        className="image-button"
-                        aria-label={`${exhibition.name} 원본 이미지 보기`}
-                        onClick={() => setSelectedImage({ url: exhibition.image_url!, name: exhibition.name })}
-                      >
-                        <img src={exhibition.image_url} alt={`${exhibition.name} 썸네일`} />
-                      </button>
-                    ) : (
-                      <div className="exhibition-placeholder">
-                        <ImageIcon />
-                      </div>
-                    )}
+                    <div className="exhibition-visual">
+                      {exhibition.image_url ? (
+                        <button
+                          type="button"
+                          className="image-button"
+                          aria-label={`${exhibition.name} 원본 이미지 보기`}
+                          onClick={() => setSelectedImage({ url: exhibition.image_url!, name: exhibition.name })}
+                        >
+                          <img src={exhibition.image_url} alt={`${exhibition.name} 썸네일`} />
+                        </button>
+                      ) : (
+                        <div className="exhibition-placeholder">
+                          <ImageIcon />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </article>
+                </article>
+              </section>
             ))}
           </div>
         ) : null}
@@ -724,7 +731,7 @@ function GalleryIcon() {
 
 function PlaceIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="place-icon">
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="meta-icon">
       <path
         d="M12 21s-6.5-5.79-6.5-10.5a6.5 6.5 0 1 1 13 0C18.5 15.21 12 21 12 21Z"
         fill="none"
@@ -733,6 +740,28 @@ function PlaceIcon() {
         strokeLinejoin="round"
       />
       <circle cx="12" cy="10.5" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  )
+}
+
+function MemoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="meta-icon">
+      <path
+        d="M7 4.75h7.2L17.5 8v11.25H7V4.75Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14 4.75V8h3.5M9.5 12h5M9.5 15.25h5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }

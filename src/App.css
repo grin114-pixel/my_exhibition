@@ -13,7 +13,7 @@
 }
 
 .topbar-title,
-.exhibition-card-header,
+.exhibition-item-header,
 .exhibition-card-body,
 .exhibition-meta,
 .card-header-actions,
@@ -279,27 +279,27 @@
 .exhibition-list {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
 }
 
-.exhibition-card {
-  position: relative;
-  border-radius: 28px;
-  padding: 16px;
+.exhibition-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.exhibition-card-header {
+.exhibition-item-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  padding: 0 4px;
 }
 
 .card-date {
   margin: 0;
   color: #b45309;
-  font-size: clamp(1.05rem, 3.2vw, 1.35rem);
+  font-size: clamp(1.1rem, 3.4vw, 1.55rem);
   font-weight: 800;
   line-height: 1.2;
 }
@@ -307,8 +307,27 @@
 .card-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
   flex: 0 0 auto;
+}
+
+.card-header-actions .icon-button {
+  border: 0;
+  background: transparent;
+  color: #d6b37a;
+  width: 34px;
+  height: 34px;
+}
+
+.card-header-actions .icon-button:hover {
+  background: rgba(245, 158, 11, 0.1);
+  color: #c4985a;
+}
+
+.exhibition-card {
+  position: relative;
+  border-radius: 28px;
+  padding: 18px 16px;
 }
 
 .exhibition-card-body {
@@ -349,16 +368,18 @@
 .exhibition-copy h3 {
   margin: 0;
   color: #422006;
-  font-size: 1.06rem;
-  font-weight: 800;
+  font-family: 'LeeSeoyun', 'Pretendard', sans-serif;
+  font-size: 1.22rem;
+  font-weight: 400;
   line-height: 1.4;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
   white-space: pre-wrap;
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
 
-.exhibition-place {
+.exhibition-place,
+.exhibition-memo {
   display: flex;
   align-items: flex-start;
   gap: 6px;
@@ -369,21 +390,12 @@
   line-height: 1.4;
 }
 
-.exhibition-place span {
+.exhibition-place span,
+.exhibition-memo span {
   min-width: 0;
   word-break: keep-all;
   overflow-wrap: anywhere;
-}
-
-.exhibition-memo {
-  margin: 0;
-  color: #a16207;
-  font-size: 0.88rem;
-  font-weight: 500;
-  line-height: 1.45;
   white-space: pre-wrap;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
 }
 
 .exhibition-place-link {
@@ -396,7 +408,7 @@
   text-decoration: underline;
 }
 
-.place-icon {
+.meta-icon {
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
