@@ -92,8 +92,11 @@
   padding: 14px 16px;
   font: inherit;
   color: #422006;
-  resize: vertical;
-  min-height: 72px;
+  resize: none;
+  min-height: 48px;
+  height: auto;
+  line-height: 1.4;
+  overflow: hidden;
 }
 
 .field input:focus,
@@ -279,7 +282,7 @@
 .exhibition-list {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 36px;
 }
 
 .exhibition-item {

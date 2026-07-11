@@ -1,4 +1,4 @@
-import { type ChangeEvent, type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import headerIcon from './assets/header-icon.png'
 import {
@@ -155,6 +155,15 @@ function sortExhibitions(exhibitions: ExhibitionView[]) {
   })
 }
 
+function autoResizeTextarea(element: HTMLTextAreaElement | null) {
+  if (!element) {
+    return
+  }
+
+  element.style.height = 'auto'
+  element.style.height = `${element.scrollHeight}px`
+}
+
 function App() {
   const [exhibitions, setExhibitions] = useState<ExhibitionView[]>([])
   const [isLoadingExhibitions, setIsLoadingExhibitions] = useState(false)
@@ -166,6 +175,8 @@ function App() {
   const [editingExhibition, setEditingExhibition] = useState<ExhibitionView | null>(null)
   const [form, setForm] = useState<ExhibitionFormState>(() => getEmptyForm())
   const [isSaving, setIsSaving] = useState(false)
+  const nameTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const memoTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const supabaseReady = isSupabaseConfigured()
 
@@ -180,6 +191,15 @@ function App() {
 
     return () => window.clearTimeout(timeoutId)
   }, [statusMessage])
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      return
+    }
+
+    autoResizeTextarea(nameTextareaRef.current)
+    autoResizeTextarea(memoTextareaRef.current)
+  }, [isModalOpen, form.name, form.memo])
 
   const loadExhibitions = useCallback(async () => {
     if (!supabaseReady) {
@@ -251,6 +271,11 @@ function App() {
     setIsModalOpen(true)
   }
 
+  function handleNameChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    setForm((current) => ({ ...current, name: event.target.value }))
+    autoResizeTextarea(event.target)
+  }
+
   function handlePlaceChange(event: ChangeEvent<HTMLInputElement>) {
     setForm((current) => ({ ...current, place: event.target.value }))
   }
@@ -261,6 +286,7 @@ function App() {
 
   function handleMemoChange(event: ChangeEvent<HTMLTextAreaElement>) {
     setForm((current) => ({ ...current, memo: event.target.value }))
+    autoResizeTextarea(event.target)
   }
 
   function handleDateChange(event: ChangeEvent<HTMLInputElement>) {
@@ -577,10 +603,11 @@ function App() {
               <label className="field">
                 <span>전시명</span>
                 <textarea
+                  ref={nameTextareaRef}
                   className="field-textarea"
-                  rows={2}
+                  rows={1}
                   value={form.name}
-                  onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                  onChange={handleNameChange}
                 />
               </label>
 
@@ -606,8 +633,9 @@ function App() {
               <label className="field">
                 <span>메모</span>
                 <textarea
+                  ref={memoTextareaRef}
                   className="field-textarea"
-                  rows={2}
+                  rows={1}
                   value={form.memo}
                   onChange={handleMemoChange}
                 />
