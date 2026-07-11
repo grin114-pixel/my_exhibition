@@ -8,6 +8,8 @@ export type Database = {
           id: string
           name: string
           place: string
+          link: string
+          memo: string
           expires_at: string
           is_recurring: boolean
           image_url: string | null
@@ -18,6 +20,8 @@ export type Database = {
           id?: string
           name: string
           place?: string
+          link?: string
+          memo?: string
           expires_at: string
           is_recurring?: boolean
           image_url?: string | null
@@ -28,6 +32,8 @@ export type Database = {
           id?: string
           name?: string
           place?: string
+          link?: string
+          memo?: string
           expires_at?: string
           is_recurring?: boolean
           image_url?: string | null

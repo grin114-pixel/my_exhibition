@@ -13,9 +13,10 @@
 }
 
 .topbar-title,
+.exhibition-card-header,
 .exhibition-card-body,
 .exhibition-meta,
-.corner-actions,
+.card-header-actions,
 .modal-actions,
 .preview-panel,
 .exhibition-visual,
@@ -56,6 +57,30 @@
   padding: 14px 16px;
   font: inherit;
   color: #422006;
+}
+
+.date-field {
+  position: relative;
+  width: 100%;
+}
+
+.date-field-display {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #eadfb4;
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px 16px;
+  color: #422006;
+  pointer-events: none;
+}
+
+.date-field input[type='date'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .field-textarea {
@@ -251,51 +276,62 @@
   gap: 18px;
 }
 
-.exhibition-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.exhibition-section + .exhibition-section {
-  margin-top: 16px;
-}
-
-.section-heading {
-  margin: 8px 4px 0;
-  color: #b45309;
-  font-size: clamp(1.1rem, 3.4vw, 1.55rem);
-}
-
 .exhibition-list {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 18px;
 }
 
 .exhibition-card {
   position: relative;
   border-radius: 28px;
-  padding: 20px 18px 18px;
+  padding: 16px;
+}
+
+.exhibition-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.card-date {
+  margin: 0;
+  color: #b45309;
+  font-size: clamp(1.05rem, 3.2vw, 1.35rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
 }
 
 .exhibition-card-body {
   display: flex;
   justify-content: space-between;
   gap: 14px;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .exhibition-copy {
+  display: flex;
   flex: 1;
   min-width: 0;
-  align-self: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding-right: 2px;
 }
 
 .exhibition-meta {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  margin: 0;
   flex-wrap: wrap;
 }
 
@@ -311,9 +347,12 @@
 }
 
 .exhibition-copy h3 {
-  margin: 0 0 8px;
+  margin: 0;
   color: #422006;
-  font-size: 1.08rem;
+  font-size: 1.06rem;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
   white-space: pre-wrap;
   word-break: keep-all;
   overflow-wrap: anywhere;
@@ -321,23 +360,52 @@
 
 .exhibition-place {
   display: flex;
-  align-items: center;
-  gap: 5px;
+  align-items: flex-start;
+  gap: 6px;
   margin: 0;
   color: #92703a;
-  font-size: 1.02rem;
-  font-weight: 700;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.exhibition-place span {
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.exhibition-memo {
+  margin: 0;
+  color: #a16207;
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.exhibition-place-link {
+  text-decoration: none;
+  color: #b45309;
+  cursor: pointer;
+}
+
+.exhibition-place-link:hover span {
+  text-decoration: underline;
 }
 
 .place-icon {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   flex: 0 0 auto;
+  margin-top: 0.2em;
   color: #d97706;
 }
 
 .exhibition-place-empty {
-  opacity: 0;
+  display: none;
 }
 
 .exhibition-visual {
@@ -359,23 +427,6 @@
   width: 112px;
   height: 156px;
   border-radius: 20px;
-}
-
-.exhibition-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-end;
-  width: 44px;
-  min-width: 44px;
-}
-
-.corner-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  justify-content: flex-end;
-  width: 44px;
 }
 
 .exhibition-visual img {
@@ -539,23 +590,13 @@
     width: 100%;
   }
 
-  .exhibition-actions {
-    width: 44px;
-    min-width: 44px;
-    align-items: flex-end;
-  }
-
   .modal-actions {
     align-items: stretch;
   }
 
   .exhibition-card-body {
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
-  }
-
-  .corner-actions {
-    justify-content: flex-end;
   }
 
   .exhibition-visual img,

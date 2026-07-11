@@ -4,12 +4,20 @@ create table if not exists public.exhibitions (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   place text not null default '',
+  link text not null default '',
+  memo text not null default '',
   expires_at date not null,
   is_recurring boolean not null default false,
   image_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.exhibitions
+  add column if not exists link text not null default '';
+
+alter table public.exhibitions
+  add column if not exists memo text not null default '';
 
 create or replace function public.set_updated_at()
 returns trigger

@@ -1,4 +1,4 @@
-import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useState } from 'react'
 import './App.css'
 import headerIcon from './assets/header-icon.png'
 import {
@@ -12,12 +12,13 @@ type ExhibitionRecord = Database['public']['Tables']['exhibitions']['Row']
 
 type ExhibitionView = ExhibitionRecord & {
   effectiveDate: Date
-  effectiveDateKey: string
 }
 
 type ExhibitionFormState = {
   name: string
   place: string
+  link: string
+  memo: string
   expiresAt: string
   imageFile: File | null
   imagePreview: string | null
@@ -36,6 +37,8 @@ function getEmptyForm(): ExhibitionFormState {
   return {
     name: '',
     place: '',
+    link: '',
+    memo: '',
     expiresAt: getTodayInputValue(),
     imageFile: null,
     imagePreview: null,
@@ -48,13 +51,6 @@ function parseLocalDate(value: string) {
   return new Date(year, month - 1, day)
 }
 
-function toDateKey(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
 function formatDateLabel(date: Date) {
   const year = String(date.getFullYear()).slice(-2)
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -62,13 +58,68 @@ function formatDateLabel(date: Date) {
   return `${year}/${month}/${day}`
 }
 
+function formatDateDisplay(value: string) {
+  if (!value) {
+    return ''
+  }
+
+  const [year, month, day] = value.split('-')
+  return `${year}.${month}.${day}`
+}
+
+function normalizeLink(value: string) {
+  const trimmed = value.trim()
+
+  if (!trimmed) {
+    return ''
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed
+  }
+
+  return `https://${trimmed}`
+}
+
+function getStoragePathFromPublicUrl(imageUrl: string) {
+  const marker = `/object/public/${storageBucket}/`
+  const markerIndex = imageUrl.indexOf(marker)
+
+  if (markerIndex === -1) {
+    return null
+  }
+
+  const encodedPath = imageUrl.slice(markerIndex + marker.length)
+  return decodeURIComponent(encodedPath.split('?')[0] ?? '')
+}
+
+async function deleteExhibitionImage(imageUrl: string | null | undefined) {
+  if (!imageUrl) {
+    return
+  }
+
+  const filePath = getStoragePathFromPublicUrl(imageUrl)
+
+  if (!filePath) {
+    return
+  }
+
+  const supabase = getSupabaseClient()
+  const { error } = await supabase.storage.from(storageBucket).remove([filePath])
+
+  if (error) {
+    throw error
+  }
+}
+
 function normalizeExhibition(exhibition: ExhibitionRecord): ExhibitionView {
   const effectiveDate = parseLocalDate(exhibition.expires_at)
 
   return {
     ...exhibition,
+    link: exhibition.link ?? '',
+    memo: exhibition.memo ?? '',
     effectiveDate,
-    effectiveDateKey: toDateKey(effectiveDate),
   }
 }
 
@@ -144,7 +195,7 @@ function App() {
       const supabase = getSupabaseClient()
       const { data, error } = await supabase
         .from('exhibitions')
-        .select('id, name, place, expires_at, is_recurring, image_url')
+        .select('id, name, place, link, memo, expires_at, is_recurring, image_url')
         .order('expires_at', { ascending: true })
 
       if (error) {
@@ -169,26 +220,6 @@ function App() {
     })()
   }, [loadExhibitions])
 
-  const groupedExhibitions = useMemo(() => {
-    const groups = new Map<string, { label: string; exhibitions: ExhibitionView[] }>()
-
-    for (const exhibition of exhibitions) {
-      const existingGroup = groups.get(exhibition.effectiveDateKey)
-
-      if (existingGroup) {
-        existingGroup.exhibitions.push(exhibition)
-        continue
-      }
-
-      groups.set(exhibition.effectiveDateKey, {
-        label: formatDateLabel(exhibition.effectiveDate),
-        exhibitions: [exhibition],
-      })
-    }
-
-    return Array.from(groups.values())
-  }, [exhibitions])
-
   function resetForm() {
     setForm(getEmptyForm())
   }
@@ -210,6 +241,8 @@ function App() {
     setForm({
       name: exhibition.name,
       place: exhibition.place,
+      link: exhibition.link,
+      memo: exhibition.memo,
       expiresAt: exhibition.expires_at,
       imageFile: null,
       imagePreview: exhibition.image_url,
@@ -220,6 +253,14 @@ function App() {
 
   function handlePlaceChange(event: ChangeEvent<HTMLInputElement>) {
     setForm((current) => ({ ...current, place: event.target.value }))
+  }
+
+  function handleLinkChange(event: ChangeEvent<HTMLInputElement>) {
+    setForm((current) => ({ ...current, link: event.target.value }))
+  }
+
+  function handleMemoChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    setForm((current) => ({ ...current, memo: event.target.value }))
   }
 
   function handleDateChange(event: ChangeEvent<HTMLInputElement>) {
@@ -295,7 +336,8 @@ function App() {
 
     try {
       const supabase = getSupabaseClient()
-      let imageUrl = editingExhibition?.image_url ?? null
+      const previousImageUrl = editingExhibition?.image_url ?? null
+      let imageUrl = previousImageUrl
 
       if (form.removeImage) {
         imageUrl = null
@@ -308,6 +350,8 @@ function App() {
       const payload = {
         name: form.name.trim(),
         place: form.place.trim(),
+        link: normalizeLink(form.link),
+        memo: form.memo.trim(),
         expires_at: form.expiresAt,
         is_recurring: false,
         image_url: imageUrl,
@@ -334,6 +378,10 @@ function App() {
         setStatusMessage('전시 일정을 등록했어요.')
       }
 
+      if (previousImageUrl && previousImageUrl !== imageUrl) {
+        await deleteExhibitionImage(previousImageUrl)
+      }
+
       closeModal()
       await loadExhibitions()
     } catch (error) {
@@ -358,6 +406,8 @@ function App() {
       if (error) {
         throw error
       }
+
+      await deleteExhibitionImage(exhibition.image_url)
 
       setStatusMessage('전시 일정을 삭제했어요.')
       await loadExhibitions()
@@ -401,7 +451,7 @@ function App() {
           </section>
         ) : null}
 
-        {!isLoadingExhibitions && groupedExhibitions.length === 0 ? (
+        {!isLoadingExhibitions && exhibitions.length === 0 ? (
           <section className="empty-state">
             <div className="empty-illustration">
               <GalleryIcon />
@@ -411,72 +461,82 @@ function App() {
           </section>
         ) : null}
 
-        {!isLoadingExhibitions &&
-          groupedExhibitions.map((group) => (
-            <section key={group.label} className="exhibition-section">
-              <h2 className="section-heading">{group.label}</h2>
-              <div className="exhibition-list">
-                {group.exhibitions.map((exhibition) => (
-                  <article key={exhibition.id} className="exhibition-card">
-                    <div className="exhibition-card-body">
-                      <div className="exhibition-copy">
-                        <div className="exhibition-meta">
-                          {exhibition.is_recurring ? <span className="chip">매달 반복</span> : null}
-                        </div>
-                        <h3>{exhibition.name}</h3>
-                        {exhibition.place ? (
-                          <p className="exhibition-place">
-                            <PlaceIcon />
-                            <span>{exhibition.place}</span>
-                          </p>
-                        ) : (
-                          <p className="exhibition-place exhibition-place-empty">&nbsp;</p>
-                        )}
-                      </div>
+        {!isLoadingExhibitions && exhibitions.length > 0 ? (
+          <div className="exhibition-list">
+            {exhibitions.map((exhibition) => (
+              <article key={exhibition.id} className="exhibition-card">
+                <div className="exhibition-card-header">
+                  <h2 className="card-date">{formatDateLabel(exhibition.effectiveDate)}</h2>
+                  <div className="card-header-actions">
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="전시 수정"
+                      onClick={() => openEditModal(exhibition)}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="전시 삭제"
+                      onClick={() => setExhibitionPendingDelete(exhibition)}
+                    >
+                      <DeleteIcon />
+                    </button>
+                  </div>
+                </div>
 
-                      <div className="exhibition-visual">
-                        {exhibition.image_url ? (
-                          <button
-                            type="button"
-                            className="image-button"
-                            aria-label={`${exhibition.name} 원본 이미지 보기`}
-                            onClick={() => setSelectedImage({ url: exhibition.image_url!, name: exhibition.name })}
-                          >
-                            <img src={exhibition.image_url} alt={`${exhibition.name} 썸네일`} />
-                          </button>
-                        ) : (
-                          <div className="exhibition-placeholder">
-                            <ImageIcon />
-                          </div>
-                        )}
+                <div className="exhibition-card-body">
+                  <div className="exhibition-copy">
+                    {exhibition.is_recurring ? (
+                      <div className="exhibition-meta">
+                        <span className="chip">매달 반복</span>
                       </div>
+                    ) : null}
+                    <h3>{exhibition.name}</h3>
+                    {exhibition.place ? (
+                      exhibition.link ? (
+                        <a
+                          className="exhibition-place exhibition-place-link"
+                          href={normalizeLink(exhibition.link)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <PlaceIcon />
+                          <span>{exhibition.place}</span>
+                        </a>
+                      ) : (
+                        <p className="exhibition-place">
+                          <PlaceIcon />
+                          <span>{exhibition.place}</span>
+                        </p>
+                      )
+                    ) : null}
+                    {exhibition.memo ? <p className="exhibition-memo">{exhibition.memo}</p> : null}
+                  </div>
 
-                      <div className="exhibition-actions">
-                        <div className="corner-actions">
-                          <button
-                            type="button"
-                            className="icon-button"
-                            aria-label="전시 수정"
-                            onClick={() => openEditModal(exhibition)}
-                          >
-                            <EditIcon />
-                          </button>
-                          <button
-                            type="button"
-                            className="icon-button"
-                            aria-label="전시 삭제"
-                            onClick={() => setExhibitionPendingDelete(exhibition)}
-                          >
-                            <DeleteIcon />
-                          </button>
-                        </div>
+                  <div className="exhibition-visual">
+                    {exhibition.image_url ? (
+                      <button
+                        type="button"
+                        className="image-button"
+                        aria-label={`${exhibition.name} 원본 이미지 보기`}
+                        onClick={() => setSelectedImage({ url: exhibition.image_url!, name: exhibition.name })}
+                      >
+                        <img src={exhibition.image_url} alt={`${exhibition.name} 썸네일`} />
+                      </button>
+                    ) : (
+                      <div className="exhibition-placeholder">
+                        <ImageIcon />
                       </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          ))}
+                    )}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </main>
 
       <button
@@ -527,8 +587,31 @@ function App() {
               </label>
 
               <label className="field">
+                <span>링크</span>
+                <input
+                  type="url"
+                  inputMode="url"
+                  value={form.link}
+                  onChange={handleLinkChange}
+                />
+              </label>
+
+              <label className="field">
+                <span>메모</span>
+                <textarea
+                  className="field-textarea"
+                  rows={2}
+                  value={form.memo}
+                  onChange={handleMemoChange}
+                />
+              </label>
+
+              <label className="field">
                 <span>날짜</span>
-                <input type="date" value={form.expiresAt} onChange={handleDateChange} />
+                <div className="date-field">
+                  <span className="date-field-display">{formatDateDisplay(form.expiresAt)}</span>
+                  <input type="date" value={form.expiresAt} onChange={handleDateChange} />
+                </div>
               </label>
 
               <label className="field">
